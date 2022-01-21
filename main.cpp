@@ -1,6 +1,7 @@
 #include "general/vectorUtility.h"
 #include "general/stringUtility.h"
 #include "general/parseArguments.h"
+#include "binaryUtility.h"
 #include <utility>
 
 struct CIDR; // forward declaration
@@ -105,7 +106,5 @@ ostream& operator << (ostream& out, const CIDR& cidr) {
 }
 
 int main() {
-  IP ip("1.41.244.31");
-  CIDR cidr("1.41.244.31/23");
-  cout << "\nip = " << ip << "\ncidr = " << cidr << "\n\n";
+  // ...
 }
