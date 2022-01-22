@@ -67,6 +67,18 @@ struct IP {
     return digits;
   }
 
+  string binaryDigitsGroupsOf8() const {
+    vector<int> digits = binaryDigits();
+    string result;
+    for (int i = 0; i < digits.size(); i++) {
+      result += to_string(digits.at(i));
+      if (i % 8 == 7 && i != digits.size() - 1) {
+        result += " ";
+      }
+    }
+    return result;
+  }
+
   vector<bool> containedInEachOf(const vector<CIDR>& ranges) const;
   CIDR longestPrefixMatch(const vector<CIDR>& candidates) const;
 
@@ -159,9 +171,65 @@ struct CIDR : public IP {
 
 };
 
-vector<CIDR> aggregate(const vector<CIDR>& ranges) {
-  // TODO
+bool aggregate(vector<CIDR>& copy, int a, int b, vector<int>& indexesToIgnore) {
+  if (vecUtil::contains(indexesToIgnore, a) || vecUtil::contains(indexesToIgnore, b)) {
+    return false;
+  }
+  auto a_startAndEnd = copy.at(a).startAndEndIP();
+  auto b_startAndEnd = copy.at(b).startAndEndIP();
+  IP a_start = a_startAndEnd.first, a_end = a_startAndEnd.second, b_start = b_startAndEnd.first, b_end = b_startAndEnd.second;
+  pair<IP, char> smallerStart = (a_start < b_start) ? pair<IP, char>(a_start, 'a') : pair<IP, char>(b_start, 'b');
+  pair<IP, char> largerEnd = (a_end < b_end) ? pair<IP, char>(b_end, 'b') : pair<IP, char>(a_end, 'a');
+  if (smallerStart.second == 'a') {
+    if (a_end < b_start) {
+      return false;
+    } else {
+      if (b_end < a_end || b_end == a_end) {
+        // b is completely contained inside a
+        indexesToIgnore.push_back(b);
+        return true;
+      }
+      vector<int> a_networkPart = vecUtil::subvector(copy.at(a).binaryDigits(), 0, copy.at(a).networkPortion - 1);
+      vector<int> b_networkPart = vecUtil::subvector(copy.at(b).binaryDigits(), 0, copy.at(b).networkPortion - 1);
+      // ...
+    }
+  } else {
+    if (b_end < a_start) {
+      return false;
+    } else {
+      // ...
+    }
+  }
+  // REMOVE THIS WHEN FUNCTION IS COMPLETE
   throw '!';
+}
+
+vector<CIDR> aggregate(const vector<CIDR>& ranges) {
+  vector<CIDR> copy = ranges;
+  vector<int> indexesToIgnore;
+  bool done = true;
+  while (true) {
+    for (int i = 0; i < copy.size() - 1; i++) {
+      for (int r = i + 1; r < copy.size(); r++) {
+        if (aggregate(copy, i, r, indexesToIgnore)) {
+          done = false;
+        }
+      }
+    }
+    vector<CIDR> temp;
+    for (int i = 0; i < copy.size(); i++) {
+      if (!vecUtil::contains(indexesToIgnore, i)) {
+        temp.push_back(copy.at(i));
+      }
+    }
+    copy = temp;
+    indexesToIgnore.clear();
+    if (done) {
+      return copy;
+    } else {
+      done = true;
+    }
+  }
 }
 
 vector<bool> IP::containedInEachOf(const vector<CIDR>& ranges) const {
