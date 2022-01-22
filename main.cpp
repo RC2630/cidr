@@ -91,11 +91,6 @@ struct CIDR : public IP {
     return (IP) *this == (IP) other && networkPortion == other.networkPortion;
   }
 
-  pair<IP, IP> startAndEndIP() const {
-    // TODO
-    throw '!';
-  }
-
   vector<CIDR> divide(int numRanges) const {
     // TODO
     throw '!';
@@ -124,12 +119,20 @@ struct CIDR : public IP {
 
   bool contains(const IP& ip) const {
     CIDR other(ip, networkPortion);
-    // TODO
-    throw '!';
+    return other.simplify() == simplify();
   }
 
   unsigned int numHostsThatCanExist() const {
     return pow(2, 32 - networkPortion) - (networkPortion == 31 ? 0 : 2);
+  }
+
+  pair<IP, IP> startAndEndIP() const {
+    vector<int> start = simplify().binaryDigits();
+    vector<int> end = vecUtil::subvector(start, 0, networkPortion - 1);
+    for (int i = networkPortion + 1; i <= 32; i++) {
+      end.push_back(1);
+    }
+    return {IP(start), IP(end)};
   }
 
 };
@@ -140,13 +143,23 @@ vector<CIDR> aggregate(const vector<CIDR>& ranges) {
 }
 
 vector<bool> IP::containedInEachOf(const vector<CIDR>& ranges) const {
-  // TODO
-  throw '!';
+  vector<bool> v;
+  for (const CIDR& cidr : ranges) {
+    v.push_back(cidr.contains(*this));
+  }
+  return v;
 }
 
 CIDR IP::longestPrefixMatch(const vector<CIDR>& candidates) const {
-  // TODO
-  throw '!';
+  vector<CIDR> filteredCandidates;
+  for (const CIDR& cidr : candidates) {
+    if (cidr.contains(*this)) {
+      filteredCandidates.push_back(cidr);
+    }
+  }
+  return *max_element(filteredCandidates.begin(), filteredCandidates.end(), [] (const CIDR& cidr1, const CIDR& cidr2) {
+    return cidr1.networkPortion < cidr2.networkPortion;
+  });
 }
 
 ostream& operator << (ostream& out, const IP& ip) {
