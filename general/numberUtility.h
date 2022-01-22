@@ -150,6 +150,12 @@ namespace numUtil {
         return goodToString;
     }
 
+  // EVERYTHING AFTER THIS POINT IS AUTOMATICALLY ROEPCF, UNLESS OTHERWISE SPECIFIED
+
+  double log(double arg, double base) {
+    return std::log(arg) / std::log(base);
+  }
+
 }
 
 #endif

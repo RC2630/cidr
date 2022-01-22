@@ -4,6 +4,8 @@
 #include <vector>
 #include <cmath>
 
+#include "numberUtility.h"
+
 using namespace std;
 
 namespace binUtil {
@@ -29,6 +31,24 @@ namespace binUtil {
       }
     }
     return d;
+  }
+
+  vector<int> decToBinNoLeading0(int dec) {
+    if (dec == 0) {
+      return {0};
+    }
+    vector<int> v;
+    bool hasLeading1 = false;
+    for (int i = numUtil::log(dec, 2); i >= 0; i--) {
+      if (dec - pow(2, i) >= 0) {
+        v.push_back(1);
+        dec -= pow(2, i);
+        hasLeading1 = true;
+      } else if (hasLeading1) {
+        v.push_back(0);
+      }
+    }
+    return v;
   }
 
 }

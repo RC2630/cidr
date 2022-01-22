@@ -2,6 +2,8 @@
 #include "general/stringUtility.h"
 #include "general/parseArguments.h"
 #include "general/binaryUtility.h"
+#include "general/numberUtility.h"
+#include "general/ansi_codes.h"
 
 #include <cmath>
 #include <tuple>
@@ -43,6 +45,13 @@ struct IP {
 
   bool operator == (const IP& other) const {
     return tie(a, b, c, d) == tie(other.a, other.b, other.c, other.d);
+  }
+
+  bool operator < (const IP& other) const {
+    return a < other.a ? true : (a > other.a ? false : (
+      b < other.b ? true : (b > other.b ? false : (
+        c < other.c ? true : (c > other.c ? false : (
+          d < other.d))))));
   }
 
   vector<int> binaryDigits() const {
@@ -91,11 +100,6 @@ struct CIDR : public IP {
     return (IP) *this == (IP) other && networkPortion == other.networkPortion;
   }
 
-  vector<CIDR> divide(int numRanges) const {
-    // TODO
-    throw '!';
-  }
-
   IP netmask() const {
     vector<int> digits;
     for (int i = 1; i <= 32; i++) {
@@ -133,6 +137,28 @@ struct CIDR : public IP {
       end.push_back(1);
     }
     return {IP(start), IP(end)};
+  }
+
+  vector<CIDR> divide(int numRanges) const {
+    vector<int> networkPart = vecUtil::subvector(simplify().binaryDigits(), 0, networkPortion - 1);
+    vector<vector<int>> hostParts;
+    for (int i = 0; i < numRanges; i++) {
+      vector<int> temp = binUtil::decToBinNoLeading0(i);
+      reverse(temp.begin(), temp.end());
+      int tempSize = temp.size();
+      for (int i = 1; i <= 32 - networkPortion - tempSize; i++) {
+        temp.push_back(0);
+      }
+      hostParts.push_back(temp);
+    }
+    vector<CIDR> divisions;
+    for (const auto& hostPart : hostParts) {
+      divisions.push_back(CIDR(IP(vecUtil::concatenate<int>({networkPart, hostPart})), networkPortion + numUtil::log(numRanges, 2)));
+    }
+    sort(divisions.begin(), divisions.end(), [] (const CIDR& cidr1, const CIDR& cidr2) {
+      return (IP) cidr1 < (IP) cidr2;
+    });
+    return divisions;
   }
 
 };
