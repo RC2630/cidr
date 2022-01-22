@@ -143,8 +143,7 @@ struct CIDR : public IP {
     vector<int> networkPart = vecUtil::subvector(simplify().binaryDigits(), 0, networkPortion - 1);
     vector<vector<int>> hostParts;
     for (int i = 0; i < numRanges; i++) {
-      vector<int> temp = binUtil::decToBinNoLeading0(i);
-      reverse(temp.begin(), temp.end());
+      vector<int> temp = binUtil::decToBinNdigits(i, numUtil::log(numRanges, 2));
       int tempSize = temp.size();
       for (int i = 1; i <= 32 - networkPortion - tempSize; i++) {
         temp.push_back(0);
@@ -155,9 +154,6 @@ struct CIDR : public IP {
     for (const auto& hostPart : hostParts) {
       divisions.push_back(CIDR(IP(vecUtil::concatenate<int>({networkPart, hostPart})), networkPortion + numUtil::log(numRanges, 2)));
     }
-    sort(divisions.begin(), divisions.end(), [] (const CIDR& cidr1, const CIDR& cidr2) {
-      return (IP) cidr1 < (IP) cidr2;
-    });
     return divisions;
   }
 

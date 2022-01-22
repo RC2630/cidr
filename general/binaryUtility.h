@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cmath>
+#include <stdexcept>
 
 #include "numberUtility.h"
 
@@ -45,6 +46,27 @@ namespace binUtil {
         dec -= pow(2, i);
         hasLeading1 = true;
       } else if (hasLeading1) {
+        v.push_back(0);
+      }
+    }
+    return v;
+  }
+
+  int minRequiredDigits(int dec) {
+    return (dec == 0) ? 1 : (numUtil::log(dec, 2) + 1);
+  }
+
+  vector<int> decToBinNdigits(int dec, int n) {
+    int minRequired = minRequiredDigits(dec);
+    if (n < minRequired) {
+      throw invalid_argument("minimum required digits = " + to_string(minRequired));
+    }
+    vector<int> v;
+    for (int i = n - 1; i >= 0; i--) {
+      if (dec - pow(2, i) >= 0) {
+        v.push_back(1);
+        dec -= pow(2, i);
+      } else {
         v.push_back(0);
       }
     }
