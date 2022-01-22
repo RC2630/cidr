@@ -1,7 +1,10 @@
 #include "general/vectorUtility.h"
 #include "general/stringUtility.h"
 #include "general/parseArguments.h"
-#include "binaryUtility.h"
+#include "general/binaryUtility.h"
+
+#include <cmath>
+#include <tuple>
 #include <utility>
 
 struct CIDR; // forward declaration
@@ -27,6 +30,34 @@ struct IP {
     d = parse::parseNumericalArgument(temp, 4);
   }
 
+  IP(const vector<int>& digits) {
+    vector<int> result;
+    for (int i = 0; i <= 24; i += 8) {
+      result.push_back(binUtil::binToDec1Byte(vecUtil::subvector(digits, i, i + 7)));
+    }
+    a = result.at(0);
+    b = result.at(1);
+    c = result.at(2);
+    d = result.at(3);
+  }
+
+  bool operator == (const IP& other) const {
+    return tie(a, b, c, d) == tie(other.a, other.b, other.c, other.d);
+  }
+
+  vector<int> binaryDigits() const {
+    vector<int> digits;
+    vector<int> temp = binUtil::decToBin1Byte(a);
+    digits.insert(digits.end(), temp.begin(), temp.end());
+    temp = binUtil::decToBin1Byte(b);
+    digits.insert(digits.end(), temp.begin(), temp.end());
+    temp = binUtil::decToBin1Byte(c);
+    digits.insert(digits.end(), temp.begin(), temp.end());
+    temp = binUtil::decToBin1Byte(d);
+    digits.insert(digits.end(), temp.begin(), temp.end());
+    return digits;
+  }
+
   vector<bool> containedInEachOf(const vector<CIDR>& ranges) const;
   CIDR longestPrefixMatch(const vector<CIDR>& candidates) const;
 
@@ -48,6 +79,18 @@ struct CIDR : public IP {
     networkPortion = parse::parseNumericalArgument(temp, 5);
   }
 
+  CIDR(const IP& ip, int networkPortion_) {
+    a = ip.a;
+    b = ip.b;
+    c = ip.c;
+    d = ip.d;
+    networkPortion = networkPortion_;
+  }
+
+  bool operator == (const CIDR& other) const {
+    return (IP) *this == (IP) other && networkPortion == other.networkPortion;
+  }
+
   pair<IP, IP> startAndEndIP() const {
     // TODO
     throw '!';
@@ -58,24 +101,35 @@ struct CIDR : public IP {
     throw '!';
   }
 
-  bool contains(const IP& ip) const {
-    // TODO
-    throw '!';
-  }
-
   IP netmask() const {
-    // TODO
-    throw '!';
+    vector<int> digits;
+    for (int i = 1; i <= 32; i++) {
+      if (i <= networkPortion) {
+        digits.push_back(1);
+      } else {
+        digits.push_back(0);
+      }
+    }
+    return IP(digits);
   }
 
   CIDR simplify() const {
+    vector<int> digits = binaryDigits();
+    vector<int> mask = netmask().binaryDigits();
+    for (int i = 0; i < digits.size(); i++) {
+      digits.at(i) &= mask.at(i);
+    }
+    return CIDR(IP(digits), networkPortion);
+  }
+
+  bool contains(const IP& ip) const {
+    CIDR other(ip, networkPortion);
     // TODO
     throw '!';
   }
 
-  int numHostsThatCanExist() const {
-    // TODO
-    throw '!';
+  unsigned int numHostsThatCanExist() const {
+    return pow(2, 32 - networkPortion) - (networkPortion == 31 ? 0 : 2);
   }
 
 };
